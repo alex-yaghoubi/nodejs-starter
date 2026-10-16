@@ -12,7 +12,8 @@ test('generator makes a complete project with a unique untracked secret', async 
   const root = path.join(dir, 'my-api');
   const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
   assert.equal(pkg.name, 'my-api');
-  assert.match(result.message, /docker compose up -d db/);
+  assert.match(result.message, /Optional Docker database: docker compose up -d db/);
+  assert.match(result.message, /Set DATABASE_URL/);
   assert.match(result.message, /db:migrate/);
   assert.match(result.message, /db:generate/);
   const env = await readFile(path.join(root, '.env'), 'utf8');

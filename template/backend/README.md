@@ -9,17 +9,18 @@ Docker and operational scripts. No managed vendor services or frontend required.
 
 ## Quick start
 
-Use Node.js **20.9+**, npm and Docker. The generator creates a unique `.env`
-secret that Git ignores. If starting from the template directly, copy
-`.env.example` to `.env` and replace `JWT_SECRET` with a strong random value.
+Requirements: Node.js **20.9+**, npm (or your chosen package manager) and access to **PostgreSQL**. **Docker is optional**. The generator creates a unique, Git-ignored `.env` secret. If using the template directly, copy `.env.example` to `.env` and replace `JWT_SECRET` with a strong random value.
 
 ```bash
 npm install
-docker compose up -d db
+# Set DATABASE_URL in .env to your local or hosted PostgreSQL instance.
+# Optional local DB matching .env.example: docker compose up -d db
 npm run db:generate
 npm run db:migrate
 npm run dev
 ```
+
+If PostgreSQL is already available (locally or hosted), skip Docker entirely. The sample `DATABASE_URL` uses the optional Compose database credentials; replace it with your own connection string and required TLS settings.
 
 - API: http://127.0.0.1:4000
 - Swagger UI (local only): http://127.0.0.1:4000/docs
@@ -193,7 +194,7 @@ npm run test:integration   # needs a separate migrated PostgreSQL database
 
 Integration runs are destructive and require a separate migrated database
 whose name ends in `_test`, plus explicit `ALLOW_INTEGRATION_DB=true`.
-For local testing, create an isolated database and migrate it first:
+For local testing, create an isolated database and migrate it first. The example below uses **optional Docker Compose**. With a locally installed or hosted PostgreSQL instance instead, create a distinct `_test` database and use its URL with the same migrate/test commands:
 
 ```bash
 docker compose up -d db
@@ -206,9 +207,9 @@ NODE_ENV=test ALLOW_INTEGRATION_DB=true \
 The integration test cleans up its generated accounts after execution. Do
 **not** point it at an existing application or production database.
 
-## Docker
+## Optional Docker
 
-For a local DB only (recommended for rapid development):
+Docker is not required for the API. If you prefer a disposable PostgreSQL database instead of an existing local or hosted one:
 
 ```bash
 docker compose up -d db

@@ -36,11 +36,14 @@ API with PostgreSQL, Drizzle ORM and versioned REST endpoints. Included:
 node ./bin/create-nodejs-standard-api.mjs my-api --skip-install
 cd my-api
 npm install
-docker compose up -d db
+# Set DATABASE_URL in .env to your local or hosted PostgreSQL instance.
+# Optional local DB matching the example .env: docker compose up -d db
 npm run db:generate
 npm run db:migrate
 npm run dev
 ```
+
+**Docker is optional.** This API requires a reachable PostgreSQL database; use one installed locally, hosted by a provider, or started with the included optional Compose file.
 
 Visit http://localhost:4000/docs (development only) and use the sample Tasks
 API after creating an account. The generator creates a local, git-ignored `.env`

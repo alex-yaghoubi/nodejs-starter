@@ -79,7 +79,7 @@ export async function generate(args, cwd = process.cwd(), install = true) {
     const status = spawnSync('git', ['init'], {cwd: destination, stdio: 'ignore'});
     if (status.error || status.status !== 0) console.warn('Git was not initialized; you can run git init later.');
   }
-  return {message: `Created ${destination}\n\nNext steps:\n  cd ${options.name}\n  docker compose up -d db\n  ${options.skipInstall ? options.pm + ' install\n  ' : ''}${options.pm} run db:generate\n  ${options.pm} run db:migrate\n  ${options.pm} run dev\n\nDocs: http://localhost:4000/docs (development only)\nHealth: http://localhost:4000/health`};
+  return {message: `Created ${destination}\n\nNext steps:\n  cd ${options.name}\n  # Set DATABASE_URL in .env to your local or hosted PostgreSQL instance.\n  # Optional Docker database: docker compose up -d db\n  ${options.skipInstall ? options.pm + ' install\n  ' : ''}${options.pm} run db:generate\n  ${options.pm} run db:migrate\n  ${options.pm} run dev\n\nDocs: http://localhost:4000/docs (development only)\nHealth: http://localhost:4000/health`};
 }
 
 // Resolve npm's node_modules/.bin symlink: compare the invoked realpath, not its link.
