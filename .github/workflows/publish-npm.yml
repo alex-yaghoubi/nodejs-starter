@@ -40,6 +40,28 @@ jobs:
           '
       - name: Test generator
         run: npm test
+      - name: Verify packed CLI is installable before publishing
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive=$(npm pack --silent)
+          tar -tzf "$archive" | grep -Fx 'package/bin/create-nodejs-standard-api.mjs'
+          tar -xOf "$archive" package/package.json | node -e '
+            let text="";
+            process.stdin.on("data", chunk => text += chunk).on("end", () => {
+              const p=JSON.parse(text);
+              if (p.bin?.["create-nodejs-standard-api"] !== "bin/create-nodejs-standard-api.mjs")
+                throw Error("Invalid packed CLI bin field — refusing publish");
+            });
+          '
+          workdir=$(mktemp -d)
+          trap 'rm -rf "$workdir"' EXIT
+          npm install --prefix "$workdir" "$GITHUB_WORKSPACE/$archive" --ignore-scripts --no-audit --no-fund
+          test -x "$workdir/node_modules/.bin/create-nodejs-standard-api"
+          test "$("$workdir/node_modules/.bin/create-nodejs-standard-api" --version)" = "0.3.0"
+          "$workdir/node_modules/.bin/create-nodejs-standard-api" smoke-api --skip-install --no-git
+          test -f smoke-api/.env
+          rm -rf smoke-api
       - name: Inspect exact publish contents
         run: npm pack --dry-run
       - name: Publish to npm registry

@@ -4,7 +4,7 @@
   "description": "Generate a secure, modular Fastify TypeScript PostgreSQL API",
   "type": "module",
   "bin": {
-    "create-nodejs-standard-api": "./bin/create-nodejs-standard-api.mjs"
+    "create-nodejs-standard-api": "bin/create-nodejs-standard-api.mjs"
   },
   "engines": {
     "node": ">=20.9.0"
