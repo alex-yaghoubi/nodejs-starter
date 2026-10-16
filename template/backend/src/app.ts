@@ -60,10 +60,10 @@ export async function buildApp() {
       return reply.code(error.statusCode).send({error: {code: error.code, message: error.message, requestId: request.id}});
     }
     // Let the client know if it exceeded rate limits, without leaking internals.
-    if (error.statusCode === 429) {
+    if (error instanceof Error && 'statusCode' in error && error.statusCode === 429) {
       return reply.code(429).send({error: {code: 'RATE_LIMITED', message: 'Too many requests', requestId: request.id}});
     }
-    if (error.statusCode === 400) {
+    if (error instanceof Error && 'statusCode' in error && error.statusCode === 400) {
       return reply.code(400).send({error: {code: 'BAD_REQUEST', message: 'Invalid request', requestId: request.id}});
     }
     request.log.error({err: error}, 'Unhandled request failure');
