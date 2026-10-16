@@ -1,0 +1,35 @@
+{
+  "name": "create-nodejs-standard-api",
+  "version": "0.3.0",
+  "description": "Generate a secure, modular Fastify TypeScript PostgreSQL API",
+  "type": "module",
+  "bin": {
+    "create-nodejs-standard-api": "./bin/create-nodejs-standard-api.mjs"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "files": [
+    "bin",
+    "template/backend"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "pack:check": "npm pack --dry-run"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alex-yaghoubi/nodejs-starter.git"
+  },
+  "keywords": [
+    "create",
+    "fastify",
+    "typescript",
+    "postgresql",
+    "drizzle",
+    "backend",
+    "api",
+    "starter"
+  ]
+}

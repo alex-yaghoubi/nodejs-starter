@@ -1,0 +1,83 @@
+name: Manual backend starter validation
+# Opt-in only; deliberately no push, pull_request, publish or deploy triggers.
+on:
+  workflow_dispatch:
+    inputs:
+      run_integration:
+        description: Also run disposable PostgreSQL integration tests
+        type: boolean
+        required: false
+        default: false
+permissions:
+  contents: read
+jobs:
+  generator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test generator
+        run: npm test
+      - name: Inspect tarball content
+        run: npm pack --dry-run
+      - name: Scaffold a real consumer from installed npm tarball
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive=$(npm pack --silent)
+          consumer=$(mktemp -d)
+          npm install --prefix "$consumer" "$GITHUB_WORKSPACE/$archive" --ignore-scripts --no-audit --no-fund
+          cd "$consumer"
+          ./node_modules/.bin/create-nodejs-standard-api api-check --skip-install --no-git
+          test -f api-check/.env
+          test -f api-check/.gitignore
+          grep -q '^\.env$' api-check/.gitignore
+          mv api-check "$GITHUB_WORKSPACE/api-check"
+      - name: Install and check generated API
+        working-directory: api-check
+        run: |
+          npm install --no-audit --no-fund
+          npm run typecheck
+          npm test
+          npm run build
+
+  postgres-integration:
+    if: inputs.run_integration
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: standard_api_test
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: integration_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d standard_api_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgres://app:integration_only@127.0.0.1:5432/standard_api_test
+      ALLOW_INTEGRATION_DB: 'true'
+      JWT_SECRET: ci-only-not-a-production-secret-long-enough-for-tests-2026
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Scaffold disposable API
+        run: node ./bin/create-nodejs-standard-api.mjs integration-api --skip-install --no-git
+      - name: Install and migrate disposable database
+        working-directory: integration-api
+        run: |
+          npm install --no-audit --no-fund
+          npm run db:generate
+          npm run db:migrate
+      - name: Exercise real auth, session revocation and task CRUD
+        working-directory: integration-api
+        run: npm run test:integration
