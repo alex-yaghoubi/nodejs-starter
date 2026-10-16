@@ -1,0 +1,51 @@
+name: Publish npm package (manual)
+# This workflow NEVER runs on push, PR, deploy or tag creation.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_version:
+        description: 'Type 0.3.0 to confirm publication of create-nodejs-standard-api'
+        required: true
+        type: string
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: npm-release-create-nodejs-standard-api
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install npm CLI supporting OIDC
+        run: npm install --global npm@latest
+      - name: Check release identity and operator confirmation
+        env:
+          CONFIRM_VERSION: ${{ inputs.confirm_version }}
+        run: |
+          node --input-type=module -e '
+            import fs from "node:fs";
+            const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+            if (pkg.name !== "create-nodejs-standard-api" || pkg.version !== process.env.CONFIRM_VERSION || process.env.CONFIRM_VERSION !== "0.3.0")
+              throw Error("Release identity or version mismatch. Refusing publication.");
+            if (!String(pkg.repository?.url || "").includes("github.com/alex-yaghoubi/nodejs-starter.git"))
+              throw Error("Unexpected source repository.");
+            console.log(`Release checked: ${pkg.name}@${pkg.version}`);
+          '
+      - name: Test generator
+        run: npm test
+      - name: Inspect exact publish contents
+        run: npm pack --dry-run
+      - name: Publish to npm registry
+        env:
+          # For the FIRST release, configure a temporary npm granular publishing token
+          # as a GitHub Actions secret. Later, prefer npm Trusted Publishing (OIDC)
+          # for this exact workflow file and remove the temporary secret.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
+        run: npm publish --access public
